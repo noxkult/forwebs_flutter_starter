@@ -12,7 +12,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '공용 기능 데모',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
       home: const MyHomePage(),
     );
   }
@@ -34,7 +36,8 @@ class MyHomePage extends StatelessWidget {
             FilledButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const WebViewScreen(url: 'https://flutter.dev'),
+                  builder: (_) =>
+                      const WebViewScreen(url: 'https://flutter.dev'),
                 ),
               ),
               child: const Text('WebView 열기'),

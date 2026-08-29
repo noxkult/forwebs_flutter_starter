@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -72,7 +73,13 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
     if (!mounted) return;
     setState(() => _controller = controller);
-    await controller.loadRequest(uri);
+    try {
+      await controller.loadRequest(uri);
+    } on PlatformException catch (error) {
+      _showError(error.message ?? '페이지를 불러올 수 없습니다.');
+    } catch (_) {
+      _showError('페이지를 불러올 수 없습니다.');
+    }
   }
 
   void _showError(String message) {
@@ -117,7 +124,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
                       const SizedBox(height: 12),
                       Text(_errorMessage!, textAlign: TextAlign.center),
                       const SizedBox(height: 16),
-                      TextButton(onPressed: _loadPage, child: const Text('다시 시도')),
+                      TextButton(
+                        onPressed: _loadPage,
+                        child: const Text('다시 시도'),
+                      ),
                     ],
                   ),
                 ),
