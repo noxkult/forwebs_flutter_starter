@@ -30,7 +30,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPage();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadPage();
+    });
   }
 
   Future<void> _loadPage() async {
