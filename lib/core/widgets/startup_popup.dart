@@ -12,6 +12,9 @@ class StartupPopup {
     required List<StartupPopupItem> items,
     String storageKey = 'startup_popup_hidden_until',
     double heightFactor = .38,
+    Color? bottomBackgroundColor,
+    String hideTodayText = '오늘 하루 안보기',
+    String closeText = '닫기',
   }) async {
     if (items.isEmpty || !context.mounted) return;
     final preferences = await SharedPreferences.getInstance();
@@ -26,6 +29,9 @@ class StartupPopup {
       builder: (_) => _StartupPopupSheet(
         items: items,
         heightFactor: heightFactor,
+        bottomBackgroundColor: bottomBackgroundColor,
+        hideTodayText: hideTodayText,
+        closeText: closeText,
         onHideToday: () async {
           await preferences.setString(storageKey, _todayKey());
         },
@@ -44,11 +50,17 @@ class _StartupPopupSheet extends StatefulWidget {
     required this.items,
     required this.heightFactor,
     required this.onHideToday,
+    this.bottomBackgroundColor,
+    required this.hideTodayText,
+    required this.closeText,
   });
 
   final List<StartupPopupItem> items;
   final double heightFactor;
   final Future<void> Function() onHideToday;
+  final Color? bottomBackgroundColor;
+  final String hideTodayText;
+  final String closeText;
 
   @override
   State<_StartupPopupSheet> createState() => _StartupPopupSheetState();
@@ -74,7 +86,9 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
     return FractionallySizedBox(
       heightFactor: widget.heightFactor,
       child: Material(
-        color: Theme.of(context).colorScheme.surface,
+        color:
+            widget.bottomBackgroundColor ??
+            Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         clipBehavior: Clip.antiAlias,
         child: SafeArea(
@@ -119,12 +133,12 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
                   children: [
                     TextButton(
                       onPressed: _hideToday,
-                      child: const Text('오늘 하루 안보기'),
+                      child: Text(widget.hideTodayText),
                     ),
                     const Spacer(),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('닫기'),
+                      child: Text(widget.closeText),
                     ),
                   ],
                 ),
@@ -169,6 +183,16 @@ class _PopupContent extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(item.message!, textAlign: TextAlign.center),
+              ),
+            ],
+            if (item.actionText != null && item.onTap != null) ...[
+              const SizedBox(height: 8),
+              FilledButton(
+                onPressed: () {
+                  item.onTap!();
+                  Navigator.of(context).pop();
+                },
+                child: Text(item.actionText!),
               ),
             ],
           ],
