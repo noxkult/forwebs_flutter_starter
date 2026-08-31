@@ -159,14 +159,19 @@ class _PopupContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: item.onTap,
+    final hasImage = item.imageUrl != null || item.assetImage != null;
+    return Material(
+      color: item.backgroundColor ?? Colors.transparent,
       child: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (item.imageUrl != null || item.assetImage != null)
-              _PopupImage(item: item, maxHeight: maxImageHeight),
+            if (hasImage)
+              _PopupImage(
+                item: item,
+                maxHeight: maxImageHeight,
+                onPressed: _actionPressed(context),
+              ),
             if (item.title != null) ...[
               const SizedBox(height: 8),
               Padding(
@@ -185,12 +190,15 @@ class _PopupContent extends StatelessWidget {
                 child: Text(item.message!, textAlign: TextAlign.center),
               ),
             ],
-            if (item.actionText != null && item.onTap != null) ...[
+            if (!hasImage && item.actionText != null && item.onTap != null) ...[
               const SizedBox(height: 8),
               FilledButton(
                 onPressed: () {
                   item.onTap!();
-                  Navigator.of(context).pop();
+                  if (context.mounted &&
+                      (ModalRoute.of(context)?.isCurrent ?? false)) {
+                    Navigator.of(context).pop();
+                  }
                 },
                 child: Text(item.actionText!),
               ),
@@ -200,13 +208,28 @@ class _PopupContent extends StatelessWidget {
       ),
     );
   }
+
+  VoidCallback? _actionPressed(BuildContext context) {
+    if (item.actionText == null || item.onTap == null) return null;
+    return () {
+      item.onTap!();
+      if (context.mounted && (ModalRoute.of(context)?.isCurrent ?? false)) {
+        Navigator.of(context).pop();
+      }
+    };
+  }
 }
 
 class _PopupImage extends StatelessWidget {
-  const _PopupImage({required this.item, required this.maxHeight});
+  const _PopupImage({
+    required this.item,
+    required this.maxHeight,
+    required this.onPressed,
+  });
 
   final StartupPopupItem item;
   final double maxHeight;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -215,16 +238,35 @@ class _PopupImage extends StatelessWidget {
             item.imageUrl!,
             width: double.infinity,
             fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           )
         : Image.asset(
             item.assetImage!,
             width: double.infinity,
             fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           );
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
-      child: image,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          image,
+          if (item.actionText != null)
+            Positioned(
+              bottom: 12,
+              left: 16,
+              right: 16,
+              child: Center(
+                child: FilledButton(
+                  onPressed: onPressed,
+                  child: Text(item.actionText!),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
