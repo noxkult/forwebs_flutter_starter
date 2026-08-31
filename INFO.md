@@ -1,3 +1,3 @@
 git add .
-git commit -m "Add startup_popup"
+git commit -m "startup_popup update"
 git push

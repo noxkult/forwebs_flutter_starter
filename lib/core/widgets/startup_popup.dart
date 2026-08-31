@@ -84,15 +84,27 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.sizeOf(context).height;
-    final popupHeight = (screenHeight * widget.heightFactor).clamp(
-      0.0,
-      screenHeight * .85,
-    );
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final firstItem = widget.items.first;
+    final isSquareImagePopup =
+        widget.items.length == 1 &&
+        firstItem.title == null &&
+        firstItem.message == null &&
+        (firstItem.imageUrl != null || firstItem.assetImage != null);
+    const bottomControlsHeight = 60.0;
+    final squareImageHeight = screenWidth + bottomControlsHeight;
+    final requestedHeight = screenHeight * widget.heightFactor;
+    final popupHeight =
+        (isSquareImagePopup && requestedHeight < squareImageHeight
+                ? squareImageHeight
+                : requestedHeight)
+            .clamp(0.0, screenHeight * .85);
 
     return SizedBox(
       height: popupHeight,
       child: Material(
         color:
+            (isSquareImagePopup ? firstItem.backgroundColor : null) ??
             widget.bottomBackgroundColor ??
             Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -111,6 +123,7 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
                     itemBuilder: (_, index) => _PopupContent(
                       item: widget.items[index],
                       maxImageHeight: constraints.maxHeight,
+                      squareImage: isSquareImagePopup,
                     ),
                   ),
                 ),
@@ -161,10 +174,15 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
 }
 
 class _PopupContent extends StatelessWidget {
-  const _PopupContent({required this.item, required this.maxImageHeight});
+  const _PopupContent({
+    required this.item,
+    required this.maxImageHeight,
+    this.squareImage = false,
+  });
 
   final StartupPopupItem item;
   final double maxImageHeight;
+  final bool squareImage;
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +198,7 @@ class _PopupContent extends StatelessWidget {
                 item: item,
                 maxHeight: maxImageHeight,
                 onPressed: _actionPressed(context),
+                squareImage: squareImage,
               ),
             if (item.title != null) ...[
               const SizedBox(height: 8),
@@ -234,11 +253,13 @@ class _PopupImage extends StatelessWidget {
     required this.item,
     required this.maxHeight,
     required this.onPressed,
+    this.squareImage = false,
   });
 
   final StartupPopupItem item;
   final double maxHeight;
   final VoidCallback? onPressed;
+  final bool squareImage;
 
   @override
   Widget build(BuildContext context) {
@@ -256,13 +277,13 @@ class _PopupImage extends StatelessWidget {
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           );
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
+    Widget imageStack = SizedBox(
+      width: double.infinity,
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
           image,
-          if (item.actionText != null)
+          if (item.actionText != null && item.onTap != null)
             Positioned(
               bottom: 12,
               left: 16,
@@ -276,6 +297,15 @@ class _PopupImage extends StatelessWidget {
             ),
         ],
       ),
+    );
+
+    if (squareImage) {
+      imageStack = AspectRatio(aspectRatio: 1, child: imageStack);
+    }
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: imageStack,
     );
   }
 }
