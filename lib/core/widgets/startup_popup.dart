@@ -83,16 +83,14 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isSingleImagePopup =
-        widget.items.length == 1 &&
-        widget.items.first.title == null &&
-        widget.items.first.message == null &&
-        (widget.items.first.imageUrl != null ||
-            widget.items.first.assetImage != null);
-    final maxSheetHeight = MediaQuery.sizeOf(context).height * .9;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final popupHeight = (screenHeight * widget.heightFactor).clamp(
+      0.0,
+      screenHeight * .85,
+    );
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+    return SizedBox(
+      height: popupHeight,
       child: Material(
         color:
             widget.bottomBackgroundColor ??
@@ -103,26 +101,20 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
           top: false,
           child: Column(
             children: [
-              if (isSingleImagePopup)
-                _PopupContent(
-                  item: widget.items.first,
-                  maxImageHeight: maxSheetHeight,
-                )
-              else
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => PageView.builder(
-                      controller: _pageController,
-                      itemCount: widget.items.length,
-                      onPageChanged: (page) =>
-                          setState(() => _currentPage = page),
-                      itemBuilder: (_, index) => _PopupContent(
-                        item: widget.items[index],
-                        maxImageHeight: constraints.maxHeight,
-                      ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) => PageView.builder(
+                    controller: _pageController,
+                    itemCount: widget.items.length,
+                    onPageChanged: (page) =>
+                        setState(() => _currentPage = page),
+                    itemBuilder: (_, index) => _PopupContent(
+                      item: widget.items[index],
+                      maxImageHeight: constraints.maxHeight,
                     ),
                   ),
                 ),
+              ),
               if (widget.items.length > 1)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -141,20 +133,23 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
                     ),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Row(
-                  children: [
-                    TextButton(
-                      onPressed: _hideToday,
-                      child: Text(widget.hideTodayText),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(widget.closeText),
-                    ),
-                  ],
+              SizedBox(
+                height: 60,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      TextButton(
+                        onPressed: _hideToday,
+                        child: Text(widget.hideTodayText),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(widget.closeText),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
