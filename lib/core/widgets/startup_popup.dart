@@ -83,8 +83,16 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      heightFactor: widget.heightFactor,
+    final isSingleImagePopup =
+        widget.items.length == 1 &&
+        widget.items.first.title == null &&
+        widget.items.first.message == null &&
+        (widget.items.first.imageUrl != null ||
+            widget.items.first.assetImage != null);
+    final maxSheetHeight = MediaQuery.sizeOf(context).height * .9;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxSheetHeight),
       child: Material(
         color:
             widget.bottomBackgroundColor ??
@@ -95,20 +103,26 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
           top: false,
           child: Column(
             children: [
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) => PageView.builder(
-                    controller: _pageController,
-                    itemCount: widget.items.length,
-                    onPageChanged: (page) =>
-                        setState(() => _currentPage = page),
-                    itemBuilder: (_, index) => _PopupContent(
-                      item: widget.items[index],
-                      maxImageHeight: constraints.maxHeight * .72,
+              if (isSingleImagePopup)
+                _PopupContent(
+                  item: widget.items.first,
+                  maxImageHeight: maxSheetHeight,
+                )
+              else
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => PageView.builder(
+                      controller: _pageController,
+                      itemCount: widget.items.length,
+                      onPageChanged: (page) =>
+                          setState(() => _currentPage = page),
+                      itemBuilder: (_, index) => _PopupContent(
+                        item: widget.items[index],
+                        maxImageHeight: constraints.maxHeight,
+                      ),
                     ),
                   ),
                 ),
-              ),
               if (widget.items.length > 1)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
