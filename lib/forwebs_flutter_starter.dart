@@ -4,3 +4,5 @@ library;
 export 'core/widgets/webview/web_view_screen.dart';
 export 'core/helpers/ui_helper.dart';
 export 'core/widgets/back_press_exit_scope.dart';
+export 'core/models/startup_popup_item.dart';
+export 'core/widgets/startup_popup.dart';
