@@ -82,12 +82,17 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
           child: Column(
             children: [
               Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: widget.items.length,
-                  onPageChanged: (page) => setState(() => _currentPage = page),
-                  itemBuilder: (_, index) =>
-                      _PopupContent(item: widget.items[index]),
+                child: LayoutBuilder(
+                  builder: (context, constraints) => PageView.builder(
+                    controller: _pageController,
+                    itemCount: widget.items.length,
+                    onPageChanged: (page) =>
+                        setState(() => _currentPage = page),
+                    itemBuilder: (_, index) => _PopupContent(
+                      item: widget.items[index],
+                      maxImageHeight: constraints.maxHeight * .72,
+                    ),
+                  ),
                 ),
               ),
               if (widget.items.length > 1)
@@ -133,34 +138,69 @@ class _StartupPopupSheetState extends State<_StartupPopupSheet> {
 }
 
 class _PopupContent extends StatelessWidget {
-  const _PopupContent({required this.item});
+  const _PopupContent({required this.item, required this.maxImageHeight});
 
   final StartupPopupItem item;
+  final double maxImageHeight;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: item.onTap,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+      child: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (item.imageUrl != null)
-              Image.network(item.imageUrl!, height: 100, fit: BoxFit.contain)
-            else if (item.assetImage != null)
-              Image.asset(item.assetImage!, height: 100, fit: BoxFit.contain),
+            if (item.imageUrl != null || item.assetImage != null)
+              _PopupImage(item: item, maxHeight: maxImageHeight),
             if (item.title != null) ...[
               const SizedBox(height: 8),
-              Text(item.title!, style: Theme.of(context).textTheme.titleMedium),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  item.title!,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
             ],
             if (item.message != null) ...[
               const SizedBox(height: 4),
-              Text(item.message!, textAlign: TextAlign.center),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(item.message!, textAlign: TextAlign.center),
+              ),
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PopupImage extends StatelessWidget {
+  const _PopupImage({required this.item, required this.maxHeight});
+
+  final StartupPopupItem item;
+  final double maxHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = item.imageUrl != null
+        ? Image.network(
+            item.imageUrl!,
+            width: double.infinity,
+            fit: BoxFit.contain,
+          )
+        : Image.asset(
+            item.assetImage!,
+            width: double.infinity,
+            fit: BoxFit.contain,
+          );
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: image,
     );
   }
 }
